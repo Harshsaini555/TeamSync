@@ -16,6 +16,26 @@ export enum TokenType {
   PASSWORD_RESET = "PASSWORD_RESET"
 }
 
+export enum WorkspaceRole {
+  OWNER = "OWNER",
+  ADMIN = "ADMIN",
+  MEMBER = "MEMBER",
+  GUEST = "GUEST"
+}
+
+export enum WorkspacePlan {
+  FREE = "FREE",
+  PRO = "PRO",
+  ENTERPRISE = "ENTERPRISE"
+}
+
+export enum InviteStatus {
+  PENDING = "PENDING",
+  ACCEPTED = "ACCEPTED",
+  EXPIRED = "EXPIRED",
+  REVOKED = "REVOKED"
+}
+
 export enum TaskStatus {
   BACKLOG = "BACKLOG",
   TODO = "TODO",
