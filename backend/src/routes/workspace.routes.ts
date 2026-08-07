@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { workspaceController } from "../controllers/workspace.controller";
+import { workspaceProjectRouter } from "./project.routes";
 import { authenticate } from "../middlewares/auth.middleware";
 import { requireWorkspaceRole } from "../middlewares/rbac.middleware";
 import { validateRequest } from "../middlewares/validate.middleware";
@@ -28,6 +29,9 @@ router.patch(
   workspaceController.updateWorkspace
 );
 router.delete("/:workspaceId", requireWorkspaceRole(WorkspaceRole.OWNER), workspaceController.deleteWorkspace);
+
+// Mount workspace project routes
+router.use("/:workspaceId/projects", workspaceProjectRouter);
 
 // Members and Invites
 router.get("/:workspaceId/members", requireWorkspaceRole(WorkspaceRole.GUEST), workspaceController.getMembers);
