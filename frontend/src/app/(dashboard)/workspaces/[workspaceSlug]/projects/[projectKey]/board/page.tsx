@@ -7,11 +7,12 @@ import { useProjects } from "@/hooks/use-projects";
 import { useTasks } from "@/hooks/use-tasks";
 import { ProtectedRoute } from "@/components/common/protected-route";
 import { WorkspaceSwitcher } from "@/components/common/workspace-switcher";
+import { NotificationPanel } from "@/components/common/notification-panel";
 import { CreateWorkspaceModal } from "@/components/modals/create-workspace-modal";
 import { CreateTaskModal } from "@/components/tasks/create-task-modal";
 import { KanbanBoard } from "@/components/kanban/kanban-board";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus, Settings, LayoutGrid } from "lucide-react";
+import { ArrowLeft, Plus, Settings } from "lucide-react";
 
 export default function ProjectBoardPage() {
   const params = useParams();
@@ -52,6 +53,8 @@ export default function ProjectBoardPage() {
           </div>
 
           <div className="flex items-center space-x-3">
+            <NotificationPanel />
+
             {targetProject && (
               <>
                 <Button
