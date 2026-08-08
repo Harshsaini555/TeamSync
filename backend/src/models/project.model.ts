@@ -39,7 +39,7 @@ const ProjectSchema: Schema<IProject> = new Schema(
     },
     color: {
       type: String,
-      default: "#3b82f6" // Default blue
+      default: "#3b82f6"
     },
     leadId: {
       type: Schema.Types.ObjectId,
@@ -64,5 +64,9 @@ const ProjectSchema: Schema<IProject> = new Schema(
 );
 
 ProjectSchema.index({ workspaceId: 1, key: 1 }, { unique: true });
+ProjectSchema.index(
+  { name: "text", key: "text", description: "text" },
+  { weights: { key: 10, name: 5, description: 1 } }
+);
 
 export const Project = mongoose.model<IProject>("Project", ProjectSchema);

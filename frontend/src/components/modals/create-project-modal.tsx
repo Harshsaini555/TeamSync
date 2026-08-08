@@ -11,6 +11,7 @@ interface CreateProjectModalProps {
   workspaceId: string;
   isOpen: boolean;
   onClose: () => void;
+  members?: any[];
 }
 
 export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ workspaceId, isOpen, onClose }) => {

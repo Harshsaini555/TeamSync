@@ -28,7 +28,7 @@ export interface ITask extends Document {
   assigneeId?: mongoose.Types.ObjectId;
   reporterId: mongoose.Types.ObjectId;
   dueDate?: Date;
-  estimatedTime?: number; // Hours
+  estimatedTime?: number;
   position: number;
   checklist: IChecklistItem[];
   subtasks: ISubtaskItem[];
@@ -128,5 +128,9 @@ const TaskSchema: Schema<ITask> = new Schema(
 );
 
 TaskSchema.index({ projectId: 1, taskNumber: 1 }, { unique: true });
+TaskSchema.index(
+  { title: "text", description: "text", taskKey: "text", labels: "text" },
+  { weights: { taskKey: 10, title: 5, labels: 3, description: 1 } }
+);
 
 export const Task = mongoose.model<ITask>("Task", TaskSchema);
