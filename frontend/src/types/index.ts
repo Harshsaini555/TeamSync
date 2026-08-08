@@ -1,3 +1,5 @@
+export { WorkspaceRole } from "./workspace";
+
 export enum UserRole {
   ADMIN = "ADMIN",
   MEMBER = "MEMBER",
@@ -9,6 +11,12 @@ export enum AuthProvider {
   GOOGLE = "GOOGLE"
 }
 
+export interface INotificationPreferences {
+  emailAlerts: boolean;
+  taskAssigned: boolean;
+  commentMentions: boolean;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -17,6 +25,8 @@ export interface User {
   provider: AuthProvider;
   isEmailVerified: boolean;
   avatarUrl?: string;
+  bio?: string;
+  notificationPreferences?: INotificationPreferences;
   createdAt: string;
 }
 

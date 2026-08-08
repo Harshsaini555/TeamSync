@@ -1,31 +1,28 @@
 import { Router } from "express";
 import { authController } from "../controllers/auth.controller";
-import { validateRequest } from "../middlewares/validate.middleware";
 import { authenticate } from "../middlewares/auth.middleware";
-import { rateLimiter } from "../middlewares/rate-limiter.middleware";
+import { validateRequest } from "../middlewares/validate.middleware";
 import {
   registerSchema,
   loginSchema,
   refreshTokenSchema,
-  verifyEmailSchema,
-  forgotPasswordSchema,
-  resetPasswordSchema,
-  googleAuthSchema
+  updateProfileSchema,
+  changePasswordSchema,
+  updateNotificationsSchema
 } from "../validators/auth.validator";
 
 const router = Router();
 
-const authRateLimiter = rateLimiter(10, 15 * 60 * 1000); // 10 attempts per 15 min
-
-router.post("/register", authRateLimiter, validateRequest(registerSchema), authController.register);
-router.post("/login", authRateLimiter, validateRequest(loginSchema), authController.login);
-router.post("/verify-email", validateRequest(verifyEmailSchema), authController.verifyEmail);
-router.get("/verify-email", authController.verifyEmail);
+router.post("/register", validateRequest(registerSchema), authController.register);
+router.post("/login", validateRequest(loginSchema), authController.login);
 router.post("/refresh", validateRequest(refreshTokenSchema), authController.refresh);
-router.post("/forgot-password", authRateLimiter, validateRequest(forgotPasswordSchema), authController.forgotPassword);
-router.post("/reset-password", authRateLimiter, validateRequest(resetPasswordSchema), authController.resetPassword);
-router.post("/google", validateRequest(googleAuthSchema), authController.googleAuth);
-router.post("/logout", authenticate, authController.logout);
-router.get("/me", authenticate, authController.me);
+
+router.use(authenticate);
+router.post("/logout", authController.logout);
+router.get("/me", authController.me);
+router.patch("/me/profile", validateRequest(updateProfileSchema), authController.updateProfile);
+router.patch("/me/password", validateRequest(changePasswordSchema), authController.changePassword);
+router.patch("/me/notifications", validateRequest(updateNotificationsSchema), authController.updateNotifications);
+router.delete("/me", authController.deleteAccount);
 
 export default router;

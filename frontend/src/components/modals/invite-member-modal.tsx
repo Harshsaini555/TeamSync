@@ -10,14 +10,14 @@ import { X, UserPlus, Mail } from "lucide-react";
 
 interface InviteMemberModalProps {
   workspaceId: string;
-  workspaceName: string;
+  workspaceName?: string;
   isOpen: boolean;
   onClose: () => void;
 }
 
 export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
   workspaceId,
-  workspaceName,
+  workspaceName = "Workspace",
   isOpen,
   onClose
 }) => {

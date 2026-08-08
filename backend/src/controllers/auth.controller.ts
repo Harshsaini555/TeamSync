@@ -2,24 +2,13 @@ import { Request, Response, NextFunction } from "express";
 import { authService } from "../services/auth.service";
 import { sendResponse } from "../utils/response";
 import { AuthenticatedRequest } from "../types";
-import { userRepository } from "../repositories/user.repository";
-import { NotFoundError } from "../errors/app-error";
 
 export class AuthController {
   public register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const result = await authService.register(req.body);
-      sendResponse(res, 201, result.message, result.user);
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  public verifyEmail = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const token = (req.query.token as string) || req.body.token;
-      const message = await authService.verifyEmail(token);
-      sendResponse(res, 200, message);
+      const { name, email, password } = req.body;
+      const result = await authService.register(name, email, password);
+      sendResponse(res, 201, "Registration successful. Please verify your email.", result);
     } catch (error) {
       next(error);
     }
@@ -27,8 +16,9 @@ export class AuthController {
 
   public login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const data = await authService.login(req.body);
-      sendResponse(res, 200, "Login successful", data);
+      const { email, password } = req.body;
+      const result = await authService.login(email, password);
+      sendResponse(res, 200, "Login successful", result);
     } catch (error) {
       next(error);
     }
@@ -37,8 +27,8 @@ export class AuthController {
   public refresh = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { refreshToken } = req.body;
-      const tokens = await authService.refresh(refreshToken);
-      sendResponse(res, 200, "Token refreshed", tokens);
+      const result = await authService.refreshTokens(refreshToken);
+      sendResponse(res, 200, "Tokens refreshed successfully", result);
     } catch (error) {
       next(error);
     }
@@ -46,37 +36,8 @@ export class AuthController {
 
   public logout = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
-      if (req.user?.userId) {
-        await authService.logout(req.user.userId);
-      }
+      await authService.logout(req.user!.userId);
       sendResponse(res, 200, "Logout successful");
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  public forgotPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const message = await authService.forgotPassword(req.body);
-      sendResponse(res, 200, message);
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  public resetPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const message = await authService.resetPassword(req.body);
-      sendResponse(res, 200, message);
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  public googleAuth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const data = await authService.googleAuth(req.body);
-      sendResponse(res, 200, "Google authentication successful", data);
     } catch (error) {
       next(error);
     }
@@ -84,14 +45,45 @@ export class AuthController {
 
   public me = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
-      if (!req.user?.userId) {
-        throw new NotFoundError("User not found");
-      }
-      const user = await userRepository.findById(req.user.userId);
-      if (!user) {
-        throw new NotFoundError("User account not found");
-      }
-      sendResponse(res, 200, "User profile retrieved", user);
+      const user = await authService.getCurrentUser(req.user!.userId);
+      sendResponse(res, 200, "User profile fetched", user);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public updateProfile = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const updated = await authService.updateProfile(req.user!.userId, req.body);
+      sendResponse(res, 200, "Profile updated successfully", updated);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public changePassword = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      await authService.changePassword(req.user!.userId, currentPassword, newPassword);
+      sendResponse(res, 200, "Password changed successfully");
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public updateNotifications = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const prefs = await authService.updateNotificationPreferences(req.user!.userId, req.body);
+      sendResponse(res, 200, "Notification preferences updated", prefs);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public deleteAccount = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      await authService.deleteAccount(req.user!.userId);
+      sendResponse(res, 200, "Account deleted successfully");
     } catch (error) {
       next(error);
     }

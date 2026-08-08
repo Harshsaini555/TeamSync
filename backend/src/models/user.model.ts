@@ -1,28 +1,37 @@
 import mongoose, { Schema, Document } from "mongoose";
-import { UserRole, AuthProvider } from "../constants/enums";
+
+export interface INotificationPreferences {
+  emailAlerts: boolean;
+  taskAssigned: boolean;
+  commentMentions: boolean;
+}
 
 export interface IUser extends Document {
   _id: mongoose.Types.ObjectId;
+  name: string;
   email: string;
   passwordHash?: string;
-  name: string;
-  avatarUrl?: string;
-  role: UserRole;
-  provider: AuthProvider;
   googleId?: string;
+  avatarUrl?: string;
+  bio?: string;
   isEmailVerified: boolean;
-  emailVerificationToken?: string | null;
-  emailVerificationExpires?: Date | null;
-  passwordResetToken?: string | null;
-  passwordResetExpires?: Date | null;
-  refreshTokenHash?: string | null;
-  isActive: boolean;
+  emailVerificationToken?: string;
+  emailVerificationExpires?: Date;
+  passwordResetToken?: string;
+  passwordResetExpires?: Date;
+  refreshTokenHash?: string;
+  notificationPreferences: INotificationPreferences;
   createdAt: Date;
   updatedAt: Date;
 }
 
 const UserSchema: Schema<IUser> = new Schema(
   {
+    name: {
+      type: String,
+      required: true,
+      trim: true
+    },
     email: {
       type: String,
       required: true,
@@ -35,28 +44,18 @@ const UserSchema: Schema<IUser> = new Schema(
       type: String,
       required: false
     },
-    name: {
+    googleId: {
       type: String,
-      required: true,
-      trim: true
+      required: false,
+      sparse: true
     },
     avatarUrl: {
       type: String,
       default: ""
     },
-    role: {
+    bio: {
       type: String,
-      enum: Object.values(UserRole),
-      default: UserRole.MEMBER
-    },
-    provider: {
-      type: String,
-      enum: Object.values(AuthProvider),
-      default: AuthProvider.LOCAL
-    },
-    googleId: {
-      type: String,
-      sparse: true
+      default: ""
     },
     isEmailVerified: {
       type: Boolean,
@@ -64,29 +63,28 @@ const UserSchema: Schema<IUser> = new Schema(
     },
     emailVerificationToken: {
       type: String,
-      default: null,
-      index: true
+      required: false
     },
     emailVerificationExpires: {
       type: Date,
-      default: null
+      required: false
     },
     passwordResetToken: {
       type: String,
-      default: null,
-      index: true
+      required: false
     },
     passwordResetExpires: {
       type: Date,
-      default: null
+      required: false
     },
     refreshTokenHash: {
       type: String,
-      default: null
+      required: false
     },
-    isActive: {
-      type: Boolean,
-      default: true
+    notificationPreferences: {
+      emailAlerts: { type: Boolean, default: true },
+      taskAssigned: { type: Boolean, default: true },
+      commentMentions: { type: Boolean, default: true }
     }
   },
   {
@@ -94,15 +92,6 @@ const UserSchema: Schema<IUser> = new Schema(
   }
 );
 
-UserSchema.methods.toJSON = function () {
-  const obj = this.toObject();
-  delete obj.passwordHash;
-  delete obj.emailVerificationToken;
-  delete obj.emailVerificationExpires;
-  delete obj.passwordResetToken;
-  delete obj.passwordResetExpires;
-  delete obj.refreshTokenHash;
-  return obj;
-};
+UserSchema.index({ name: "text", email: "text" });
 
 export const User = mongoose.model<IUser>("User", UserSchema);
