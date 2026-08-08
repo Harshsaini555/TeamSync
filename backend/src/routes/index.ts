@@ -2,12 +2,14 @@ import { Router } from "express";
 import authRoutes from "./auth.routes";
 import workspaceRoutes from "./workspace.routes";
 import { projectRouter } from "./project.routes";
+import { taskRouter } from "./task.routes";
 
 const router = Router();
 
 router.use("/auth", authRoutes);
 router.use("/workspaces", workspaceRoutes);
 router.use("/projects", projectRouter);
+router.use("/tasks", taskRouter);
 
 router.get("/health", (_req, res) => {
   res.status(200).json({

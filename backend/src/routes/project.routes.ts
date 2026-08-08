@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { projectController } from "../controllers/project.controller";
+import { projectTaskRouter } from "./task.routes";
 import { authenticate } from "../middlewares/auth.middleware";
 import { requireWorkspaceRole } from "../middlewares/rbac.middleware";
 import { validateRequest } from "../middlewares/validate.middleware";
@@ -33,6 +34,9 @@ projectRouter.get("/:projectId", projectController.getProjectById);
 projectRouter.patch("/:projectId", validateRequest(updateProjectSchema), projectController.updateProject);
 projectRouter.patch("/:projectId/archive", projectController.toggleArchive);
 projectRouter.delete("/:projectId", projectController.deleteProject);
+
+// Mount project task sub-router
+projectRouter.use("/:projectId/tasks", projectTaskRouter);
 
 // Member management
 projectRouter.post("/:projectId/members", validateRequest(addProjectMemberSchema), projectController.addMember);
