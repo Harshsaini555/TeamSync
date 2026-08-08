@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { workspaceController } from "../controllers/workspace.controller";
+import { dashboardController } from "../controllers/dashboard.controller";
 import { workspaceProjectRouter } from "./project.routes";
 import { authenticate } from "../middlewares/auth.middleware";
 import { requireWorkspaceRole } from "../middlewares/rbac.middleware";
@@ -22,6 +23,7 @@ router.get("/", workspaceController.getUserWorkspaces);
 router.post("/accept-invite", validateRequest(acceptInviteSchema), workspaceController.acceptInvite);
 
 router.get("/:workspaceId", requireWorkspaceRole(WorkspaceRole.GUEST), workspaceController.getWorkspaceById);
+router.get("/:workspaceId/dashboard", requireWorkspaceRole(WorkspaceRole.GUEST), dashboardController.getWorkspaceDashboard);
 router.patch(
   "/:workspaceId",
   requireWorkspaceRole(WorkspaceRole.ADMIN),
