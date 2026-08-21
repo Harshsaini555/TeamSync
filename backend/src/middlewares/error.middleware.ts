@@ -17,6 +17,16 @@ export const errorHandler = (
     return sendResponse(res, err.statusCode, err.message);
   }
 
+  // Handle Mongoose buffering/connection timeout errors gracefully
+  if (err.name === "MongooseError" || err.name === "MongoServerSelectionError") {
+    console.error("⚠️ Database Operation Error:", err.message);
+    return sendResponse(
+      res,
+      503,
+      "Database unavailable. Please ensure local MongoDB service is started or MONGODB_URI is configured in backend/.env"
+    );
+  }
+
   console.error("🔥 Unhandled Server Exception:", err);
 
   const message = env.NODE_ENV === "production" ? "Internal server error" : err.message;
