@@ -16,7 +16,6 @@ export interface AuthUserDTO {
   email: string;
   role: UserRole;
   provider: AuthProvider;
-  isEmailVerified: boolean;
   avatarUrl?: string;
   createdAt: string;
 }

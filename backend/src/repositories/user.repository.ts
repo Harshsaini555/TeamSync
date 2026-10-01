@@ -14,13 +14,6 @@ export class UserRepository {
     return User.findOne({ googleId });
   }
 
-  public async findByVerificationToken(token: string): Promise<IUser | null> {
-    return User.findOne({
-      emailVerificationToken: token,
-      emailVerificationExpires: { $gt: new Date() }
-    });
-  }
-
   public async findByResetToken(token: string): Promise<IUser | null> {
     return User.findOne({
       passwordResetToken: token,

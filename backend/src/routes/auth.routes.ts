@@ -5,6 +5,8 @@ import { validateRequest } from "../middlewares/validate.middleware";
 import {
   registerSchema,
   loginSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
   refreshTokenSchema,
   updateProfileSchema,
   changePasswordSchema,
@@ -15,6 +17,9 @@ const router = Router();
 
 router.post("/register", validateRequest(registerSchema), authController.register);
 router.post("/login", validateRequest(loginSchema), authController.login);
+router.post("/google", authController.google);
+router.post("/forgot-password", validateRequest(forgotPasswordSchema), authController.forgotPassword);
+router.post("/reset-password", validateRequest(resetPasswordSchema), authController.resetPassword);
 router.post("/refresh", validateRequest(refreshTokenSchema), authController.refresh);
 
 router.use(authenticate);

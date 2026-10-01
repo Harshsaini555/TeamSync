@@ -5,6 +5,8 @@ import { WorkspaceRole, InviteStatus } from "../constants/enums";
 import { NotFoundError, ConflictError, ForbiddenError, BadRequestError } from "../errors/app-error";
 import { CreateWorkspaceInput, UpdateWorkspaceInput, InviteMemberInput } from "../validators/workspace.validator";
 import { env } from "../config/env";
+import { notificationService } from "./notification.service";
+import { NotificationType } from "../models/notification.model";
 import nodemailer from "nodemailer";
 
 export class WorkspaceService {
@@ -66,7 +68,8 @@ export class WorkspaceService {
       throw new NotFoundError("Workspace not found");
     }
 
-    const invitedUser = await userRepository.findByEmail(input.email);
+    const cleanEmail = input.email.toLowerCase().trim();
+    const invitedUser = await userRepository.findByEmail(cleanEmail);
     if (invitedUser) {
       const existingMember = await this.repo.findMember(workspaceId, invitedUser._id.toString());
       if (existingMember) {
@@ -79,7 +82,7 @@ export class WorkspaceService {
 
     const invite = await this.repo.createInvite({
       workspaceId: workspace._id,
-      email: input.email.toLowerCase().trim(),
+      email: cleanEmail,
       role: input.role,
       token,
       invitedBy: requesterUserId as any,
@@ -89,6 +92,19 @@ export class WorkspaceService {
 
     const inviteUrl = `${env.CLIENT_URL}/workspaces/accept-invite?token=${token}`;
 
+    // Send In-App Real-time Notification if the invited email belongs to a registered user
+    if (invitedUser) {
+      await notificationService.createNotification(
+        requesterUserId,
+        invitedUser._id.toString(),
+        NotificationType.WORKSPACE_INVITED,
+        "Workspace Invitation",
+        `You were invited to join "${workspace.name}" as a ${input.role}`,
+        `/workspaces/accept-invite?token=${token}`
+      );
+    }
+
+    // Send Email via Nodemailer (with dev log fallback)
     try {
       const transporter = nodemailer.createTransport({
         host: env.SMTP_HOST,
@@ -98,7 +114,7 @@ export class WorkspaceService {
 
       await transporter.sendMail({
         from: env.EMAIL_FROM,
-        to: input.email,
+        to: cleanEmail,
         subject: `Invitation to join ${workspace.name} on TeamSync`,
         html: `
           <div style="font-family: sans-serif; background-color: #0b0f17; color: #f1f5f9; padding: 40px 20px;">

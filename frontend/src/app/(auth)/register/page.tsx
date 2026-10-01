@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registerFormSchema, RegisterFormValues } from "@/validators/auth.schema";
@@ -10,12 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
-import { Command, CheckCircle2 } from "lucide-react";
+import { Command } from "lucide-react";
 
 export default function RegisterPage() {
+  const router = useRouter();
   const { register: registerUser } = useAuth();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
@@ -34,12 +35,11 @@ export default function RegisterPage() {
 
   const onSubmit = async (data: RegisterFormValues) => {
     setErrorMsg(null);
-    setSuccessMsg(null);
     setIsSubmitting(true);
 
     try {
-      const msg = await registerUser(data);
-      setSuccessMsg(msg);
+      await registerUser(data);
+      router.push("/workspaces");
     } catch (err: any) {
       const msg = err?.response?.data?.message || "Registration failed. Please check inputs.";
       setErrorMsg(msg);
@@ -69,63 +69,46 @@ export default function RegisterPage() {
 
           <CardContent className="space-y-4">
             {errorMsg && <Alert variant="error">{errorMsg}</Alert>}
-            {successMsg && (
-              <Alert variant="success" title="Check your inbox">
-                {successMsg}
-              </Alert>
-            )}
 
-            {!successMsg ? (
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                <Input
-                  label="Full Name"
-                  placeholder="John Doe"
-                  error={errors.name?.message}
-                  {...register("name")}
-                />
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <Input
+                label="Full Name"
+                placeholder="John Doe"
+                error={errors.name?.message}
+                {...register("name")}
+              />
 
-                <Input
-                  label="Work Email"
-                  type="email"
-                  placeholder="name@company.com"
-                  autoComplete="email"
-                  error={errors.email?.message}
-                  {...register("email")}
-                />
+              <Input
+                label="Work Email"
+                type="email"
+                placeholder="name@company.com"
+                autoComplete="email"
+                error={errors.email?.message}
+                {...register("email")}
+              />
 
-                <Input
-                  label="Password"
-                  type="password"
-                  placeholder="At least 8 characters (1 uppercase, 1 number)"
-                  autoComplete="new-password"
-                  error={errors.password?.message}
-                  {...register("password")}
-                />
+              <Input
+                label="Password"
+                type="password"
+                placeholder="At least 8 characters (1 uppercase, 1 number)"
+                autoComplete="new-password"
+                error={errors.password?.message}
+                {...register("password")}
+              />
 
-                <Input
-                  label="Confirm Password"
-                  type="password"
-                  placeholder="Confirm password"
-                  autoComplete="new-password"
-                  error={errors.confirmPassword?.message}
-                  {...register("confirmPassword")}
-                />
+              <Input
+                label="Confirm Password"
+                type="password"
+                placeholder="Confirm password"
+                autoComplete="new-password"
+                error={errors.confirmPassword?.message}
+                {...register("confirmPassword")}
+              />
 
-                <Button type="submit" variant="primary" className="w-full" isLoading={isSubmitting}>
-                  Create Account
-                </Button>
-              </form>
-            ) : (
-              <div className="py-6 text-center space-y-4">
-                <CheckCircle2 className="h-12 w-12 text-emerald-400 mx-auto" />
-                <p className="text-xs text-slate-300">
-                  Verification email sent! Click the link in your email to activate your account.
-                </p>
-                <Button variant="outline" className="w-full" onClick={() => setSuccessMsg(null)}>
-                  Back to Registration
-                </Button>
-              </div>
-            )}
+              <Button type="submit" variant="primary" className="w-full" isLoading={isSubmitting}>
+                Create Account
+              </Button>
+            </form>
           </CardContent>
 
           <CardFooter className="justify-center border-t border-slate-800/60 pt-4 text-xs text-slate-400">

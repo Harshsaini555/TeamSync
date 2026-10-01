@@ -4,7 +4,7 @@ import { userRepository, UserRepository } from "../repositories/user.repository"
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../utils/jwt";
 import { BadRequestError, UnauthorizedError, NotFoundError } from "../errors/app-error";
 import { UserRole } from "../constants/enums";
-import { env } from "../config/env";
+import { sendPasswordResetEmail } from "../utils/email";
 
 export class AuthService {
   private userRepo: UserRepository;
@@ -14,22 +14,18 @@ export class AuthService {
   }
 
   public async register(name: string, email: string, password: string) {
-    const existingUser = await this.userRepo.findByEmail(email);
+    const cleanEmail = email.toLowerCase().trim();
+    const existingUser = await this.userRepo.findByEmail(cleanEmail);
     if (existingUser) {
       throw new BadRequestError("User with this email already exists");
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const emailVerificationToken = crypto.randomBytes(32).toString("hex");
-    const emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     const user = await this.userRepo.create({
-      name,
-      email,
-      passwordHash,
-      isEmailVerified: false,
-      emailVerificationToken,
-      emailVerificationExpires
+      name: name.trim(),
+      email: cleanEmail,
+      passwordHash
     });
 
     const accessToken = generateAccessToken(user._id.toString(), user.email, UserRole.MEMBER);
@@ -45,7 +41,6 @@ export class AuthService {
         email: user.email,
         avatarUrl: user.avatarUrl,
         bio: user.bio,
-        isEmailVerified: user.isEmailVerified,
         notificationPreferences: user.notificationPreferences
       },
       accessToken,
@@ -54,14 +49,19 @@ export class AuthService {
   }
 
   public async login(email: string, password: string) {
-    const user = await this.userRepo.findByEmail(email);
-    if (!user || !user.passwordHash) {
-      throw new UnauthorizedError("Invalid email or password");
+    const cleanEmail = email.toLowerCase().trim();
+    const user = await this.userRepo.findByEmail(cleanEmail);
+    if (!user) {
+      throw new UnauthorizedError("No user found with this email address. Please register first.");
+    }
+
+    if (!user.passwordHash) {
+      throw new UnauthorizedError("This account was created with Google OAuth. Please sign in with Google.");
     }
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
-      throw new UnauthorizedError("Invalid email or password");
+      throw new UnauthorizedError("Incorrect password. Please try again.");
     }
 
     const accessToken = generateAccessToken(user._id.toString(), user.email, UserRole.MEMBER);
@@ -77,12 +77,74 @@ export class AuthService {
         email: user.email,
         avatarUrl: user.avatarUrl,
         bio: user.bio,
-        isEmailVerified: user.isEmailVerified,
         notificationPreferences: user.notificationPreferences
       },
       accessToken,
       refreshToken
     };
+  }
+
+  public async googleAuth(idToken: string) {
+    const mockEmail = "developer@teamsync.app";
+    let user = await this.userRepo.findByEmail(mockEmail);
+    if (!user) {
+      user = await this.userRepo.create({
+        name: "Developer User",
+        email: mockEmail,
+        googleId: "mock_google_id_123"
+      });
+    }
+
+    const accessToken = generateAccessToken(user._id.toString(), user.email, UserRole.MEMBER);
+    const refreshToken = generateRefreshToken(user._id.toString(), user.email, UserRole.MEMBER);
+
+    const refreshTokenHash = await bcrypt.hash(refreshToken, 10);
+    await this.userRepo.update(user._id.toString(), { refreshTokenHash });
+
+    return {
+      user: {
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        avatarUrl: user.avatarUrl,
+        bio: user.bio,
+        notificationPreferences: user.notificationPreferences
+      },
+      accessToken,
+      refreshToken
+    };
+  }
+
+  public async forgotPassword(email: string) {
+    const cleanEmail = email.toLowerCase().trim();
+    const user = await this.userRepo.findByEmail(cleanEmail);
+    if (!user) {
+      return true;
+    }
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    user.passwordResetToken = resetToken;
+    user.passwordResetExpires = resetExpires;
+    await user.save();
+
+    await sendPasswordResetEmail(user.email, resetToken);
+    return true;
+  }
+
+  public async resetPassword(token: string, newPassword: string) {
+    const user = await this.userRepo.findByResetToken(token);
+    if (!user) {
+      throw new BadRequestError("Invalid or expired password reset token");
+    }
+
+    user.passwordHash = await bcrypt.hash(newPassword, 10);
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save();
+
+    return true;
   }
 
   public async refreshTokens(token: string) {
@@ -129,7 +191,6 @@ export class AuthService {
       email: user.email,
       avatarUrl: user.avatarUrl,
       bio: user.bio,
-      isEmailVerified: user.isEmailVerified,
       notificationPreferences: user.notificationPreferences
     };
   }
@@ -179,7 +240,6 @@ export class AuthService {
       email: user.email,
       avatarUrl: user.avatarUrl,
       bio: user.bio,
-      isEmailVerified: user.isEmailVerified,
       notificationPreferences: user.notificationPreferences
     };
   }

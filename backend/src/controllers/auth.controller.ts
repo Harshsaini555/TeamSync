@@ -8,7 +8,7 @@ export class AuthController {
     try {
       const { name, email, password } = req.body;
       const result = await authService.register(name, email, password);
-      sendResponse(res, 201, "Registration successful. Please verify your email.", result);
+      sendResponse(res, 201, "Registration successful", result);
     } catch (error) {
       next(error);
     }
@@ -19,6 +19,36 @@ export class AuthController {
       const { email, password } = req.body;
       const result = await authService.login(email, password);
       sendResponse(res, 200, "Login successful", result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public google = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { idToken } = req.body;
+      const result = await authService.googleAuth(idToken || "");
+      sendResponse(res, 200, "Google authentication successful", result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public forgotPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { email } = req.body;
+      await authService.forgotPassword(email);
+      sendResponse(res, 200, "If an account with that email exists, a password reset link has been sent.");
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public resetPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { token, newPassword } = req.body;
+      await authService.resetPassword(token, newPassword);
+      sendResponse(res, 200, "Password reset successfully. You may now sign in.");
     } catch (error) {
       next(error);
     }

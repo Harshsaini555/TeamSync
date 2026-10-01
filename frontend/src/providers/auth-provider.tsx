@@ -17,11 +17,10 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (values: LoginFormValues) => Promise<void>;
-  register: (values: RegisterFormValues) => Promise<string>;
+  register: (values: RegisterFormValues) => Promise<void>;
   logout: () => Promise<void>;
   forgotPassword: (values: ForgotPasswordFormValues) => Promise<string>;
   resetPassword: (token: string, values: ResetPasswordFormValues) => Promise<string>;
-  verifyEmail: (token: string) => Promise<string>;
   googleAuth: (idToken: string) => Promise<void>;
 }
 
@@ -59,23 +58,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       const response = await apiClient.post<{ data: AuthResponseData }>("/auth/login", values);
-      const { user: userData, tokens } = response.data.data;
-      tokenManager.setTokens(tokens.accessToken, tokens.refreshToken);
+      const { user: userData, accessToken, refreshToken } = response.data.data;
+      if (accessToken && refreshToken) {
+        tokenManager.setTokens(accessToken, refreshToken);
+      }
       setUser(userData);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const register = async (values: RegisterFormValues): Promise<string> => {
+  const register = async (values: RegisterFormValues): Promise<void> => {
     setIsLoading(true);
     try {
-      const response = await apiClient.post("/auth/register", {
+      const response = await apiClient.post<{ data: AuthResponseData }>("/auth/register", {
         name: values.name,
         email: values.email,
         password: values.password
       });
-      return response.data.message;
+      const { user: userData, accessToken, refreshToken } = response.data.data;
+      if (accessToken && refreshToken) {
+        tokenManager.setTokens(accessToken, refreshToken);
+      }
+      setUser(userData);
     } finally {
       setIsLoading(false);
     }
@@ -108,17 +113,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return response.data.message;
   };
 
-  const verifyEmail = async (token: string): Promise<string> => {
-    const response = await apiClient.post("/auth/verify-email", { token });
-    return response.data.message;
-  };
-
   const googleAuth = async (idToken: string) => {
     setIsLoading(true);
     try {
       const response = await apiClient.post<{ data: AuthResponseData }>("/auth/google", { idToken });
-      const { user: userData, tokens } = response.data.data;
-      tokenManager.setTokens(tokens.accessToken, tokens.refreshToken);
+      const { user: userData, accessToken, refreshToken } = response.data.data;
+      if (accessToken && refreshToken) {
+        tokenManager.setTokens(accessToken, refreshToken);
+      }
       setUser(userData);
     } finally {
       setIsLoading(false);
@@ -136,7 +138,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout,
         forgotPassword,
         resetPassword,
-        verifyEmail,
         googleAuth
       }}
     >

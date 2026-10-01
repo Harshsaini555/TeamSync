@@ -23,7 +23,6 @@ export interface User {
   email: string;
   role: UserRole;
   provider: AuthProvider;
-  isEmailVerified: boolean;
   avatarUrl?: string;
   bio?: string;
   notificationPreferences?: INotificationPreferences;
@@ -37,7 +36,8 @@ export interface AuthTokens {
 
 export interface AuthResponseData {
   user: User;
-  tokens: AuthTokens;
+  accessToken: string;
+  refreshToken: string;
 }
 
 export interface ApiResponse<T = unknown> {

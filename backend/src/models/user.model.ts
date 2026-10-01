@@ -14,9 +14,6 @@ export interface IUser extends Document {
   googleId?: string;
   avatarUrl?: string;
   bio?: string;
-  isEmailVerified: boolean;
-  emailVerificationToken?: string;
-  emailVerificationExpires?: Date;
   passwordResetToken?: string;
   passwordResetExpires?: Date;
   refreshTokenHash?: string;
@@ -56,18 +53,6 @@ const UserSchema: Schema<IUser> = new Schema(
     bio: {
       type: String,
       default: ""
-    },
-    isEmailVerified: {
-      type: Boolean,
-      default: false
-    },
-    emailVerificationToken: {
-      type: String,
-      required: false
-    },
-    emailVerificationExpires: {
-      type: Date,
-      required: false
     },
     passwordResetToken: {
       type: String,

@@ -38,7 +38,9 @@ export default function LoginPage() {
       await login(data);
       router.push("/workspaces");
     } catch (err: any) {
-      const msg = err?.response?.data?.message || "Invalid credentials. Please try again.";
+      const msg =
+        err?.response?.data?.message ||
+        (err?.message ? `Connection Error: ${err.message}` : "Invalid credentials. Please try again.");
       setErrorMsg(msg);
     } finally {
       setIsSubmitting(false);
@@ -52,7 +54,8 @@ export default function LoginPage() {
       await googleAuth("mock_google_id_token_dev");
       router.push("/workspaces");
     } catch (err: any) {
-      setErrorMsg("Google login failed.");
+      const msg = err?.response?.data?.message || "Google OAuth sign in failed. Check backend connection.";
+      setErrorMsg(msg);
     } finally {
       setIsSubmitting(false);
     }
