@@ -6,7 +6,7 @@ import { WorkspaceRole } from "@/types/workspace";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert } from "@/components/ui/alert";
-import { X, UserPlus, Mail } from "lucide-react";
+import { X, UserPlus, Mail, Copy, Check, Link } from "lucide-react";
 
 interface InviteMemberModalProps {
   workspaceId: string;
@@ -26,6 +26,8 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
   const [role, setRole] = useState<WorkspaceRole>(WorkspaceRole.MEMBER);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [generatedInviteUrl, setGeneratedInviteUrl] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   if (!isOpen) return null;
 
@@ -38,14 +40,40 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
 
     setErrorMsg(null);
     setSuccessMsg(null);
+    setGeneratedInviteUrl(null);
+    setCopied(false);
 
     try {
-      await inviteMember({ email, role });
-      setSuccessMsg(`Invitation sent to ${email}`);
+      const inviteData = await inviteMember({ email, role });
+      const token = inviteData?.token;
+
+      if (token) {
+        const inviteUrl = `${window.location.origin}/workspaces/accept-invite?token=${token}`;
+        setGeneratedInviteUrl(inviteUrl);
+      }
+
+      setSuccessMsg(`Invitation created for ${email}!`);
       setEmail("");
     } catch (err: any) {
       setErrorMsg(err?.response?.data?.message || "Failed to send invitation.");
     }
+  };
+
+  const handleCopyLink = () => {
+    if (generatedInviteUrl) {
+      navigator.clipboard.writeText(generatedInviteUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    }
+  };
+
+  const handleModalClose = () => {
+    setEmail("");
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    setGeneratedInviteUrl(null);
+    setCopied(false);
+    onClose();
   };
 
   return (
@@ -56,7 +84,7 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
             <UserPlus className="h-4 w-4 text-blue-400" />
             <h3 className="text-sm font-semibold text-slate-100">Invite Member to {workspaceName}</h3>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-200 transition-colors">
+          <button onClick={handleModalClose} className="text-slate-400 hover:text-slate-200 transition-colors">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -64,6 +92,37 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           {errorMsg && <Alert variant="error">{errorMsg}</Alert>}
           {successMsg && <Alert variant="success">{successMsg}</Alert>}
+
+          {generatedInviteUrl && (
+            <div className="p-3 bg-blue-950/40 border border-blue-800/60 rounded-lg space-y-2">
+              <div className="flex items-center space-x-1.5 text-xs text-blue-300 font-semibold">
+                <Link className="h-3.5 w-3.5" />
+                <span>Share Direct Invitation Link</span>
+              </div>
+              <p className="text-[11px] text-slate-400">
+                Copy and send this link directly to the invited member via WhatsApp, Slack, or Email:
+              </p>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={generatedInviteUrl}
+                  className="w-full text-xs font-mono bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-slate-200 focus:outline-none"
+                />
+                <Button type="button" variant="primary" size="sm" onClick={handleCopyLink} className="shrink-0">
+                  {copied ? (
+                    <>
+                      <Check className="h-3.5 w-3.5 mr-1 text-emerald-300" /> Copied
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3.5 w-3.5 mr-1" /> Copy Link
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
 
           <Input
             label="Email Address"
@@ -88,7 +147,7 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
           </div>
 
           <div className="flex items-center justify-end space-x-2 pt-2 border-t border-slate-800/80">
-            <Button type="button" variant="outline" size="sm" onClick={onClose}>
+            <Button type="button" variant="outline" size="sm" onClick={handleModalClose}>
               Done
             </Button>
             <Button type="submit" variant="primary" size="sm" isLoading={isInviting}>
