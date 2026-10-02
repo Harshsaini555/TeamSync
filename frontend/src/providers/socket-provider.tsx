@@ -20,7 +20,7 @@ const SocketContext = createContext<SocketContextType>({
   leaveProject: () => {}
 });
 
-const SOCKET_SERVER_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:5000";
+const SOCKET_SERVER_URL = "https://teamsync-backend-nmw4.onrender.com";
 
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
