@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "description": "Production-grade backend for TeamSync SaaS Project Management Platform",
   "main": "dist/server.js",
+  "type": "module",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "lint": "tsc --noEmit"

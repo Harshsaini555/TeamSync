@@ -7,18 +7,17 @@ class RedisService {
 
   constructor() {
     try {
-      this.client = new Redis({
-        host: env.REDIS_HOST,
-        port: parseInt(env.REDIS_PORT, 10),
-        password: env.REDIS_PASSWORD || undefined,
+      this.client = new Redis(env.REDIS_URL, {
         lazyConnect: true,
         maxRetriesPerRequest: 1,
+
         retryStrategy(times) {
-          if (times > 1) {
-            return null; // Stop retrying if Redis server is not installed locally
+          if (times > 3) {
+            return null;
           }
-          return 200;
-        }
+
+          return Math.min(times * 200, 1000);
+        },
       });
 
       this.client.on("connect", () => {
@@ -26,22 +25,36 @@ class RedisService {
         console.log("✅ Redis Connected");
       });
 
+      this.client.on("ready", () => {
+        this.isConnected = true;
+        console.log("✅ Redis Ready");
+      });
+
       this.client.on("error", (err) => {
         this.isConnected = false;
+        console.error("❌ Redis Error:", err.message);
       });
-    } catch (e) {
+
+      this.client.on("close", () => {
+        this.isConnected = false;
+        console.log("⚠️ Redis connection closed");
+      });
+    } catch (err) {
       this.isConnected = false;
-      console.warn("⚠️ Redis initialization skipped.");
+      console.warn("⚠️ Redis initialization failed.");
     }
   }
 
   public async connect(): Promise<void> {
-    if (this.client) {
-      try {
-        await this.client.connect();
-      } catch (err) {
-        console.log("ℹ️ Redis server not detected. App operating cleanly with in-memory storage fallback.");
-      }
+    if (!this.client) return;
+
+    try {
+      await this.client.connect();
+    } catch (err) {
+      this.isConnected = false;
+      console.warn(
+        "⚠️ Redis unavailable. App operating with fallback storage."
+      );
     }
   }
 

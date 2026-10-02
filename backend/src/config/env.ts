@@ -8,6 +8,7 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   MONGODB_URI: z.string().default("mongodb+srv://harshsaini132159:2004%40Harshsaini@cluster0.wixojqi.mongodb.net/TeamSync?retryWrites=true&w=majority"),
   REDIS_HOST: z.string().default("127.0.0.1"),
+  REDIS_URL: z.string().default("127.0.0.1"),
   REDIS_PORT: z.string().default("6379"),
   REDIS_PASSWORD: z.string().optional().default(""),
   JWT_ACCESS_SECRET: z.string().default("f6ae49bbcefa4ce04511c0eebc6ac1d27a95b50b277ad29b4dec2521da34737b"),
