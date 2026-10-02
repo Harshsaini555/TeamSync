@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Production-grade backend for TeamSync SaaS Project Management Platform",
   "main": "dist/server.js",
-  "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
